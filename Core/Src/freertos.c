@@ -23,8 +23,8 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-#include "I2Cdev.h"
-#include "MPU6050.h"
+//#include "I2Cdev.h"
+//#include "MPU6050.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -47,13 +47,6 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN Variables */
-
-osThreadId_t i2cHandle;
-const osThreadAttr_t i2cHandler_attributes = {
-	 .name = "i2cHandler",
-	 .priority = (osPriority_t) osPriorityNormal,
-	 .stack_size = 128 * 4
-};
 /*
 static ros::NodeHandle nh;
  USER CODE END Variables
@@ -119,7 +112,6 @@ static ros::NodeHandle nh;
 /* USER CODE BEGIN FunctionPrototypes */
 
 /* USER CODE END FunctionPrototypes */
-void StartI2CTask(void *argument);
 /*void StartROS(void *argument);
 void StartInfoTask(void *argument);
 extern void StartErrorHandler(void *argument);
@@ -129,7 +121,7 @@ extern void StartTerminal(void *argument);
 extern void StartImuManager(void *argument);
 extern void StartUsonicManager(void *argument);*/
 
-extern void MX_USB_DEVICE_Init(void);
+//extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* Hook prototypes */
@@ -190,7 +182,6 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of rosSpin */
-	i2cHandle = osThreadNew(StartI2CTask, NULL, &i2cHandler_attributes);
  /* rosSpinHandle = osThreadNew(StartROS, &nh, &rosSpin_attributes);
 
    creation of getInfoTask
@@ -227,15 +218,6 @@ void MX_FREERTOS_Init(void) {
   * @retval None
   */
 /* USER CODE END Header_StartI2CTask */
-
-void StartI2CTask(void *argument)
-{
-
-  for(;;)
-  {
-    osDelay(1);
-  }
-}
 
 /*USER CODE BEGIN Header_StartROS
 *

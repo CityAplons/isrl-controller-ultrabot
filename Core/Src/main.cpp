@@ -113,7 +113,7 @@ int main(void)
   nh.initNode();
   if(RosSpinTaskCreate(&nh)) while(1);
   if(UsonicManagerTaskCreate(&nh)) while(1);
-  if(IMUManagerTaskCreate(&nh)) while(1);
+  //if(IMUManagerTaskCreate(&nh)) while(1);
   if(LEDManagerTaskCreate(&nh)) while(1);
   if(PowerManagerTaskCreate(&nh)) while(1);
   if(UVCManagerTaskCreate(&nh)) while(1);

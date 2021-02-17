@@ -80,8 +80,8 @@ void powerManagerTask(void * argument)
 		// Receiving current level
 		currentStatus = getCurrent(&td);
 		if (currentStatus == HAL_OK){
-			td.current = static_cast<int16_t>(td.current_raw*CURRENT_MAX/4096.*1000);
-			td.power_consumption = (td.current_raw*CURRENT_MAX/4096.) * td.voltage;
+			td.current = static_cast<int16_t>((td.current_raw-570)/52.2*1000);
+			td.power_consumption = td.current / 1000 * td.voltage;
 		} else if (currentStatus == HAL_TIMEOUT) {
 			td.current = 0;
 			td.power_consumption= 0;
