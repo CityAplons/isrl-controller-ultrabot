@@ -15,9 +15,8 @@
 #define MIN_VOLTAGE 22.0f
 #define EM_VOLTAGE 21.0f
 #define CONVERSION_MAX 4096
-#define CS_I2C_ADDRESS 0x18
+#define CS_I2C_ADDRESS 0x30
 #define DATA_REG 0x0A
-#define CURRENT_MAX 30
 
 /*
  * battery_state: [0..100]% - or battery charge

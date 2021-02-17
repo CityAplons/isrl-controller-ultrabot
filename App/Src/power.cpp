@@ -34,7 +34,7 @@ static uint8_t getVoltage(power_task_t *data)
 {
 	HAL_ADC_PollForConversion(&hadc1, 100);
 	data->voltage_raw = HAL_ADC_GetValue(&hadc1);
-	data->voltage = data->voltage_raw / CONVERSION_MAX * MAX_VOLTAGE;
+	data->voltage = data->voltage_raw * 30.5 / CONVERSION_MAX;
 	data->battery_state = static_cast<uint8_t>((data->voltage-EM_VOLTAGE)*100./(MAX_VOLTAGE-EM_VOLTAGE));
 	return static_cast<uint8_t>(data->voltage);
 }
@@ -85,23 +85,25 @@ void powerManagerTask(void * argument)
 		} else if (currentStatus == HAL_TIMEOUT) {
 			td.current = 0;
 			td.power_consumption= 0;
-			nh_->logwarn("Current sensor connection timed out!");
+			if(nh_->connected()) nh_->logwarn("Current sensor connection timed out!");
 			osDelay(1000);
 		} else {
-			nh_->logerror("Current sensor connection error!");
-			osDelay(5000);
+			if(nh_->connected()) nh_->logerror("Current sensor connection error!");
+			osDelay(1000);
 		}
 		msg1.current = td.current;
 		msg1.power_consumption = td.power_consumption;
-
-		power.publish(&msg1);
 
 		if(HAL_GPIO_ReadPin(BTN1_GPIO_Port,BTN1_Pin))
 			msg2.data = true;
 		else
 			msg2.data = false;
-		emergency.publish(&msg2);
-		osDelay(500);
+
+		if(nh_->connected()){
+			power.publish(&msg1);
+			emergency.publish(&msg2);
+		}
+		osDelay(100);
 	}
 }
 
