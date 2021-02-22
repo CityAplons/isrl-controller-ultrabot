@@ -30,13 +30,19 @@ std_msgs::Bool msg2;
 ros::Publisher power("power", &msg1);
 ros::Publisher emergency("emergency", &msg2);
 
-static uint8_t getVoltage(power_task_t *data)
+static HAL_StatusTypeDef getVoltage(power_task_t *data)
 {
-	HAL_ADC_PollForConversion(&hadc1, 100);
-	data->voltage_raw = HAL_ADC_GetValue(&hadc1);
-	data->voltage = data->voltage_raw * 30.5 / CONVERSION_MAX;
-	data->battery_state = static_cast<uint8_t>((data->voltage-EM_VOLTAGE)*100./(MAX_VOLTAGE-EM_VOLTAGE));
-	return static_cast<uint8_t>(data->voltage);
+	HAL_StatusTypeDef returnValue;
+	returnValue = HAL_ADC_Start(&hadc1);
+	if (returnValue != HAL_OK) return returnValue;
+
+	returnValue = HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY);
+	if(returnValue == HAL_OK)
+		data->voltage_raw = HAL_ADC_GetValue(&hadc1);
+	else
+		return returnValue;
+	returnValue = HAL_ADC_Stop(&hadc1);
+	return returnValue;
 }
 
 static HAL_StatusTypeDef getCurrent(power_task_t *data)
@@ -46,6 +52,9 @@ static HAL_StatusTypeDef getCurrent(power_task_t *data)
 	returnValue = HAL_I2C_Master_Transmit(&hi2c1, CS_I2C_ADDRESS, &reg, 1, HAL_MAX_DELAY);
 	if(returnValue != HAL_OK)
 		return returnValue;
+	// Strange I2C Behavior: SCL pulled down by Slave (possible stretch conflict)
+	osDelay(1);
+	//
 	uint8_t arr[2];
 	returnValue = HAL_I2C_Master_Receive(&hi2c1, CS_I2C_ADDRESS, arr, 2, HAL_MAX_DELAY);
 	if(returnValue == HAL_OK) data->current_raw = arr[0] << 8 | arr[1];
@@ -68,38 +77,47 @@ void powerManagerTask(void * argument)
 	// Initialize peripherals
 	MX_I2C1_Init();
 	MX_ADC1_Init();
-	HAL_ADC_Start(&hadc1);
 
 	HAL_StatusTypeDef currentStatus;
 	for(;;)
 	{
 		// Receiving voltage level
-		msg1.voltage = getVoltage(&td);
-		msg1.battery_state = td.battery_state;
+		currentStatus = getVoltage(&td);
+		if(currentStatus != HAL_OK)
+		{
+			if(nh_->connected()) nh_->logerror("Voltage ADC Error!");
+			osDelay(1000);
+		} else {
+			td.voltage = td.voltage_raw * 33.482 / CONVERSION_MAX;
+			td.battery_state = static_cast<uint8_t>((td.voltage-EM_VOLTAGE)*100./(MAX_VOLTAGE-EM_VOLTAGE));
+		}
 
 		// Receiving current level
 		currentStatus = getCurrent(&td);
 		if (currentStatus == HAL_OK){
 			td.current = static_cast<int16_t>((td.current_raw-570)/52.2*1000);
-			td.power_consumption = td.current / 1000 * td.voltage;
+			td.power_consumption = td.current * td.voltage / 1000.f;
 		} else if (currentStatus == HAL_TIMEOUT) {
 			td.current = 0;
 			td.power_consumption= 0;
 			if(nh_->connected()) nh_->logwarn("Current sensor connection timed out!");
 			osDelay(1000);
 		} else {
-			if(nh_->connected()) nh_->logerror("Current sensor connection error!");
+			if(nh_->connected()) nh_->logerror("Current sensor I2C connection error!");
 			osDelay(1000);
 		}
-		msg1.current = td.current;
-		msg1.power_consumption = td.power_consumption;
-
-		if(HAL_GPIO_ReadPin(BTN1_GPIO_Port,BTN1_Pin))
-			msg2.data = true;
-		else
-			msg2.data = false;
 
 		if(nh_->connected()){
+			msg1.voltage = td.voltage;
+			msg1.battery_state = td.battery_state;
+			msg1.current = td.current;
+			msg1.power_consumption = td.power_consumption;
+
+			if(HAL_GPIO_ReadPin(BTN1_GPIO_Port,BTN1_Pin))
+				msg2.data = true;
+			else
+				msg2.data = false;
+
 			power.publish(&msg1);
 			emergency.publish(&msg2);
 		}
