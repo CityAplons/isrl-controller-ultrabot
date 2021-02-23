@@ -50,17 +50,13 @@ static HAL_StatusTypeDef getCurrent(power_task_t *data)
 	HAL_StatusTypeDef returnValue;
 	uint8_t reg = DATA_REG;
 	returnValue = HAL_I2C_Master_Transmit(&hi2c1, CS_I2C_ADDRESS, &reg, 1, HAL_MAX_DELAY);
-	if(returnValue != HAL_OK)
-		return returnValue;
+	if(returnValue != HAL_OK) return returnValue;
 	// Strange I2C Behavior: SCL pulled down by Slave (possible stretch conflict)
 	osDelay(1);
 	//
 	uint8_t arr[2];
-	while(HAL_I2C_Master_Receive(&hi2c1, CS_I2C_ADDRESS, arr, 2, 35) != HAL_OK){
-		returnValue = HAL_I2C_GetError(&hi2c1);
-		//HAL_I2C_ERROR_AF;
-	}
-	data->current_raw = arr[0] << 8 | arr[1];
+	returnValue = HAL_I2C_Master_Receive(&hi2c1, CS_I2C_ADDRESS, arr, 2, HAL_MAX_DELAY);
+	if(returnValue == HAL_OK) data->current_raw = arr[0] << 8 | arr[1];
 	return returnValue;
 }
 
