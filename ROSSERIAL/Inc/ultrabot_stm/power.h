@@ -14,7 +14,7 @@ namespace ultrabot_stm
     public:
       typedef uint8_t _battery_state_type;
       _battery_state_type battery_state;
-      typedef uint8_t _voltage_type;
+      typedef float _voltage_type;
       _voltage_type voltage;
       typedef int16_t _current_type;
       _current_type current;
@@ -34,7 +34,15 @@ namespace ultrabot_stm
       int offset = 0;
       *(outbuffer + offset + 0) = (this->battery_state >> (8 * 0)) & 0xFF;
       offset += sizeof(this->battery_state);
-      *(outbuffer + offset + 0) = (this->voltage >> (8 * 0)) & 0xFF;
+      union {
+        float real;
+        uint32_t base;
+      } u_voltage;
+      u_voltage.real = this->voltage;
+      *(outbuffer + offset + 0) = (u_voltage.base >> (8 * 0)) & 0xFF;
+      *(outbuffer + offset + 1) = (u_voltage.base >> (8 * 1)) & 0xFF;
+      *(outbuffer + offset + 2) = (u_voltage.base >> (8 * 2)) & 0xFF;
+      *(outbuffer + offset + 3) = (u_voltage.base >> (8 * 3)) & 0xFF;
       offset += sizeof(this->voltage);
       union {
         int16_t real;
@@ -62,7 +70,16 @@ namespace ultrabot_stm
       int offset = 0;
       this->battery_state =  ((uint8_t) (*(inbuffer + offset)));
       offset += sizeof(this->battery_state);
-      this->voltage =  ((uint8_t) (*(inbuffer + offset)));
+      union {
+        float real;
+        uint32_t base;
+      } u_voltage;
+      u_voltage.base = 0;
+      u_voltage.base |= ((uint32_t) (*(inbuffer + offset + 0))) << (8 * 0);
+      u_voltage.base |= ((uint32_t) (*(inbuffer + offset + 1))) << (8 * 1);
+      u_voltage.base |= ((uint32_t) (*(inbuffer + offset + 2))) << (8 * 2);
+      u_voltage.base |= ((uint32_t) (*(inbuffer + offset + 3))) << (8 * 3);
+      this->voltage = u_voltage.real;
       offset += sizeof(this->voltage);
       union {
         int16_t real;
@@ -88,7 +105,7 @@ namespace ultrabot_stm
     }
 
     virtual const char * getType() override { return "ultrabot_stm/power"; };
-    virtual const char * getMD5() override { return "62dda1867abbc2b24383602c8eab5a05"; };
+    virtual const char * getMD5() override { return "3e17f18495d90b28ad85608062e408f2"; };
 
   };
 
