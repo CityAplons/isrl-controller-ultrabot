@@ -39,16 +39,20 @@ static uint8_t getVoltage(power_task_t *data)
 	return static_cast<uint8_t>(data->voltage);
 }
 
-static HAL_StatusTypeDef getCurrent(power_task_t *data)
+static uint32_t getCurrent(power_task_t *data)
 {
-	HAL_StatusTypeDef returnValue;
-	uint8_t reg = DATA_REG;
-	returnValue = HAL_I2C_Master_Transmit(&hi2c1, CS_I2C_ADDRESS, &reg, 1, HAL_MAX_DELAY);
-	if(returnValue != HAL_OK)
-		return returnValue;
+	uint32_t returnValue;
+	uint8_t reg[] = {DATA_REG};
+	while(HAL_I2C_Master_Transmit(&hi2c1, CS_I2C_ADDRESS, reg, 1, 35) != HAL_OK){
+		returnValue = HAL_I2C_GetError(&hi2c1);
+		if(HAL_I2C_GetState(&hi2c1)!=HAL_I2C_STATE_READY) return returnValue;
+	}
 	uint8_t arr[2];
-	returnValue = HAL_I2C_Master_Receive(&hi2c1, CS_I2C_ADDRESS, arr, 2, HAL_MAX_DELAY);
-	if(returnValue == HAL_OK) data->current_raw = arr[0] << 8 | arr[1];
+	while(HAL_I2C_Master_Receive(&hi2c1, CS_I2C_ADDRESS, arr, 2, 35) != HAL_OK){
+		returnValue = HAL_I2C_GetError(&hi2c1);
+		//HAL_I2C_ERROR_AF;
+	}
+	data->current_raw = arr[0] << 8 | arr[1];
 	return returnValue;
 }
 
@@ -70,7 +74,7 @@ void powerManagerTask(void * argument)
 	MX_ADC1_Init();
 	HAL_ADC_Start(&hadc1);
 
-	HAL_StatusTypeDef currentStatus;
+	uint32_t currentStatus;
 	for(;;)
 	{
 		// Receiving voltage level
@@ -79,10 +83,10 @@ void powerManagerTask(void * argument)
 
 		// Receiving current level
 		currentStatus = getCurrent(&td);
-		if (currentStatus == HAL_OK){
+		if (currentStatus == HAL_I2C_ERROR_NONE){
 			td.current = static_cast<int16_t>((td.current_raw-570)/52.2*1000);
-			td.power_consumption = td.current / 1000 * td.voltage;
-		} else if (currentStatus == HAL_TIMEOUT) {
+			td.power_consumption = td.current * td.voltage / 1000;
+		} else if (currentStatus == HAL_I2C_ERROR_TIMEOUT) {
 			td.current = 0;
 			td.power_consumption= 0;
 			if(nh_->connected()) nh_->logwarn("Current sensor connection timed out!");

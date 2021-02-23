@@ -15,7 +15,7 @@
 #define MIN_VOLTAGE 22.0f
 #define EM_VOLTAGE 21.0f
 #define CONVERSION_MAX 4096
-#define CS_I2C_ADDRESS 0x30
+#define CS_I2C_ADDRESS (uint16_t)0x30
 #define DATA_REG 0x0A
 
 /*

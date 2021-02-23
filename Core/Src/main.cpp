@@ -116,7 +116,7 @@ int main(void)
   nh.initNode();
   if(RosSpinTaskCreate(&nh)) while(1);
   if(UsonicManagerTaskCreate(&nh)) while(1);
-  //if(IMUManagerTaskCreate(&nh)) while(1);
+  if(IMUManagerTaskCreate(&nh)) while(1);
   if(LEDManagerTaskCreate(&nh)) while(1);
   if(PowerManagerTaskCreate(&nh)) while(1);
   if(UVCManagerTaskCreate(&nh)) while(1);
@@ -201,7 +201,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
-
+  if (htim->Instance == TIM3) {
+  		measure_flag = 1;
+  }
   /* USER CODE END Callback 1 */
 }
 

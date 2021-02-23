@@ -3,3 +3,4 @@
 Release/
 Debug/
 *.launch
+isrl_crossboard Debug.launch

@@ -11,6 +11,8 @@
 #include "stdint.h"
 #include "ros.h"
 
+extern __IO uint8_t measure_flag;
+
 uint32_t IMUManagerTaskCreate(ros::NodeHandle *nh);
 
 #endif /* INC_IMU_H_ */
