@@ -2,7 +2,7 @@
  * led_control.h
  *
  *  Created on: Jan 23, 2021
- *      Author: nmiha
+ *      Author: Nikita Mikhailovskiy
  */
 
 #ifndef INC_LED_H_

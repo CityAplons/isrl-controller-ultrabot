@@ -2,7 +2,7 @@
  * spin.h
  *
  *  Created on: Jan 23, 2021
- *      Author: nmiha
+ *      Author: Nikita Mikhailovskiy
  */
 
 #ifndef INC_SPIN_H_

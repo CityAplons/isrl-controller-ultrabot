@@ -1,5 +1,3 @@
-// This is a personal academic project. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: http://www.viva64.com
 /*
  * usonics.cpp
  *
@@ -135,7 +133,7 @@ void DMA1_Stream2_IRQHandler(void)
   if(hdma_uart4_rx.State==HAL_DMA_STATE_READY){
 	  if(check_crc(thread_data->rear_rx_buffer)){
 		  thread_data->data[thread_data->rear_counter] = thread_data->rear_rx_buffer[1] << 8 | thread_data->rear_rx_buffer[2];
-	      if(thread_data->data[thread_data->rear_counter] == 0) thread_data->data[thread_data->rear_counter] = 65000;
+	      if(thread_data->data[thread_data->rear_counter] == 0) thread_data->data[thread_data->rear_counter] = 500;
 		  thread_data->rear_counter++;
 	      // Updating sensor address 0-0b1,1-0b10, 2-0b11, 3-0b100, 4-0b101
 	      if(thread_data->rear_counter > SENSORS_PER_CHANNEL){
@@ -149,7 +147,7 @@ void DMA1_Stream2_IRQHandler(void)
 	      // Turn on necessary pins
 	      HAL_GPIO_WritePin(GPIOE, (pinMask << 10), GPIO_PIN_SET);
 	  }
-	  HAL_UART_Transmit(&huart4,&thread_data->req,1,2);
+	  HAL_UART_Transmit(&huart4,&thread_data->req,1,20);
 
 	  HAL_DMA_IRQHandler(&hdma_uart4_rx);
 
@@ -180,7 +178,7 @@ void DMA1_Stream5_IRQHandler(void)
   		  // Turn on necessary pins
   		  HAL_GPIO_WritePin(GPIOE, (pinMask << 7), GPIO_PIN_SET);
   	  }
-  	  HAL_UART_Transmit(&huart2,&thread_data->req,1,2);
+  	  HAL_UART_Transmit(&huart2,&thread_data->req,1,20);
 
   	  HAL_DMA_IRQHandler(&hdma_usart2_rx);
 

@@ -2,7 +2,7 @@
  * spin.cpp
  *
  *  Created on: Jan 23, 2021
- *      Author: nmiha
+ *      Author: Nikita Mikhailovskiy
  */
 
 extern "C"

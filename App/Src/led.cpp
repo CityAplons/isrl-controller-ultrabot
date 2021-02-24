@@ -56,7 +56,7 @@ void ledControlTask(void * argument)
 			led_set_color(breath_value,breath_value,breath_value);
 			osDelay(30);
 		} else {
-			osDelay(100);
+			osDelay(1000);
 		}
 
 	}

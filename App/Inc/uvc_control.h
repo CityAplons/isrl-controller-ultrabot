@@ -2,7 +2,7 @@
  * uvc_control.h
  *
  *  Created on: Jan 23, 2021
- *      Author: nmiha
+ *      Author: Nikita Mikhailovskiy
  */
 
 #ifndef INC_UVC_CONTROL_H_
@@ -13,7 +13,7 @@
 
 // Used pins, set-up: [UVC left1, UVC left2, UVC right1, UVC right2, Fans]
 #define USED_PINS RL0_Pin, RL1_Pin, RL2_Pin, RL3_Pin, RL4_Pin
-//Turn-off timeouts * 100 ms
+//Turn-off timeouts *100 ms
 #define TIMEOUTS 30, 30, 30, 30, 0
 
 typedef struct {
