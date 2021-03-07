@@ -20,8 +20,8 @@ void RosSpinTask(void * argument)
 {
   for(;;)
   {
-	  nh_->spinOnce();
-	 // osDelay(1);
+	 nh_->spinOnce();
+	 osDelay(1);
   }
 }
 
@@ -40,7 +40,7 @@ uint32_t RosSpinTaskCreate(ros::NodeHandle *nh)
 		.cb_size = 0,
 		.stack_mem = NULL,
 		.stack_size = 128 * 4,
-	  	.priority = (osPriority_t) osPriorityNormal,
+	  	.priority = (osPriority_t) osPriorityHigh,
 		.tz_module = 0,
 		.reserved = 0
 	 };

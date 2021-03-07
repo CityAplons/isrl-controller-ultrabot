@@ -84,7 +84,11 @@ void powerManagerTask(void * argument)
 		currentStatus = getVoltage(&td);
 		if(currentStatus != HAL_OK)
 		{
-			if(nh_->connected()) nh_->logerror("Voltage ADC Error!");
+			if(nh_->connected()){
+				usb_lock();
+				nh_->logerror("Voltage ADC Error!");
+				usb_unlock();
+			}
 			osDelay(1000);
 		} else {
 			td.voltage = td.voltage_raw * 33.482 / CONVERSION_MAX;
@@ -99,10 +103,18 @@ void powerManagerTask(void * argument)
 		} else if (currentStatus == HAL_TIMEOUT) {
 			td.current = 0;
 			td.power_consumption= 0;
-			if(nh_->connected()) nh_->logwarn("Current sensor connection timed out!");
+			if(nh_->connected()) {
+				usb_lock();
+				nh_->logwarn("Current sensor connection timed out!");
+				usb_unlock();
+			}
 			osDelay(1000);
 		} else {
-			if(nh_->connected()) nh_->logerror("Current sensor I2C connection error!");
+			if(nh_->connected()) {
+				usb_lock();
+				nh_->logerror("Current sensor I2C connection error!");
+				usb_unlock();
+			}
 			osDelay(1000);
 		}
 
@@ -117,8 +129,10 @@ void powerManagerTask(void * argument)
 			else
 				msg2.data = false;
 
+			usb_lock();
 			power.publish(&msg1);
 			emergency.publish(&msg2);
+			usb_unlock();
 		}
 		osDelay(100);
 	}

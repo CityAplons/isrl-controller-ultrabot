@@ -50,7 +50,7 @@ void ledControlTask(void * argument)
 	for(;;)
 	{
 		if (!nh_->connected()){
-			if (breath_value <= 30) direction = 5;
+			if (breath_value <= 20) direction = 5;
 			if (breath_value >= 240) direction = -5;
 			breath_value += direction;
 			led_set_color(breath_value,breath_value,breath_value);
@@ -79,7 +79,7 @@ uint32_t LEDManagerTaskCreate(ros::NodeHandle *nh)
 		.cb_size = 0,
 		.stack_mem = NULL,
 		.stack_size = 128 * 4,
-	  	.priority = (osPriority_t) osPriorityNormal,
+	  	.priority = (osPriority_t) osPriorityHigh,
 		.tz_module = 0,
 		.reserved = 0
 	 };

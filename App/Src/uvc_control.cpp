@@ -102,7 +102,7 @@ uint32_t UVCManagerTaskCreate(ros::NodeHandle *nh)
 		.cb_size = 0,
 		.stack_mem = NULL,
 		.stack_size = 128 * 4,
-	  	.priority = (osPriority_t) osPriorityNormal,
+	  	.priority = (osPriority_t) osPriorityHigh,
 		.tz_module = 0,
 		.reserved = 0
 	 };

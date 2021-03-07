@@ -62,10 +62,12 @@ void UsonicManagerTask(void * argument)
 			//Wait for interrupt response
 			flags = osEventFlagsWait(td.us_flag, 0b11, osFlagsWaitAll, 1000);
 			// Waiting for flags from both interrupts
+			usb_lock();
 			if (flags == 0b11) {
 				msg.data = td.data;
 				msg.data_length = NUMBER_OF_SENSORS;
 				usonics.publish(&msg);
+				usb_unlock();
 			}
 			else if(flags == 0b01){
 				char msg_arr[16+sizeof(td.front_counter)];
@@ -73,6 +75,7 @@ void UsonicManagerTask(void * argument)
 				msg_arr[sizeof(msg_arr) - 1] = '\0';
 				sprintf(&msg_arr[15],"%d",td.front_counter);
 				nh_->logwarn(msg_arr);
+				usb_unlock();
 			}
 			else if(flags == 0b10){
 				char msg_arr[15+sizeof(td.rear_counter)];
@@ -80,13 +83,16 @@ void UsonicManagerTask(void * argument)
 				msg_arr[sizeof(msg_arr) - 1] = '\0';
 				sprintf(&msg_arr[14],"%d",td.rear_counter);
 				nh_->logwarn(msg_arr);
+				usb_unlock();
 			}
 			else if (flags == (uint32_t)osErrorTimeout) {
 				nh_->logerror("Ultrasonic data read timeout!");
-				osDelay(1000);
+				usb_unlock();
+				osDelay(5000);
 			} else {
 				nh_->logerror("[UsonicManagerTask] task error!");
-				osDelay(1000);
+				usb_unlock();
+				osDelay(5000);
 			}
 		} else {
 			osDelay(100);

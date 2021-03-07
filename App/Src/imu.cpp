@@ -31,20 +31,29 @@ static ros::NodeHandle *nh_;
  * MPU6050 calibration procedure
  */
 static void calibrate(uint8_t cycles) {
-	if (nh_->connected())
+	if (nh_->connected()) {
+		usb_lock();
 		nh_->loginfo("IMU [MPU6050] gyroscope calibration started!");
+		usb_unlock();
+	}
 	MPU6050_setXGyroOffset(0);
 	MPU6050_setYGyroOffset(0);
 	MPU6050_setZGyroOffset(0);
 
 	size_t counter;
+	int16_t cx, cy, cz, pcx, pcy, pcz;
+	float integralX = 0;
+	float integralY = 0;
+	float integralZ = 0;
+	pcx = 0;
+	pcy = 0;
+	pcz = 0;
 	for (counter = 0; counter < cycles; counter++) {
-		uint8_t average_counter = 1;
-		int16_t cx, cy, cz;
+		uint8_t average_counter = 0;
 		int gcx = 0;
 		int gcy = 0;
 		int gcz = 0;
-		while (average_counter <= 100) {
+		while (average_counter < 10) {
 			if (measure_flag) {
 				MPU6050_getRotation(&cx, &cy, &cz);
 				gcx += cx;
@@ -58,9 +67,15 @@ static void calibrate(uint8_t cycles) {
 		gcy /= average_counter * (-1);
 		gcz /= average_counter * (-1);
 
-		cx = static_cast<int16_t>(gcx);
-		cy = static_cast<int16_t>(gcy);
-		cz = static_cast<int16_t>(gcz);
+		integralX += gcx * 0.1f * Ki;
+		integralY += gcy * 0.1f * Ki;
+		integralZ += gcz * 0.1f * Ki;
+		cx = (int16_t) (gcx * Kp + integralX + Kd * (gcx - pcx) / 0.1f);
+		cy = (int16_t) (gcy * Kp + integralY + Kd * (gcy - pcy) / 0.1f);
+		cz = (int16_t) (gcz * Kp + integralZ + Kd * (gcz - pcz) / 0.1f);
+		pcx = gcx;
+		pcy = gcy;
+		pcz = gcz;
 		// Swapping bytes because of Cortex LSB Memory
 		cx = __bswap16(cx);
 		cy = __bswap16(cy);
@@ -69,15 +84,18 @@ static void calibrate(uint8_t cycles) {
 		MPU6050_setYGyroOffset(cy);
 		MPU6050_setZGyroOffset(cz);
 	}
-	if (nh_->connected())
+	if (nh_->connected()) {
+		usb_lock();
 		nh_->loginfo("IMU [MPU6050] gyroscope calibration finished!");
+		usb_unlock();
+	}
 }
 
 /*
  * ROS Calibration subscriber callback
  */
 static void calibrate_cb(const std_msgs::Empty &toggle_msg) {
-	calibrate(3);
+	calibrate(50);
 }
 
 sensor_msgs::Imu imu_msg;
@@ -98,9 +116,12 @@ void imuTask(void *argument) {
 	MPU6050_initialize();
 
 	while (!MPU6050_testConnection()) {
-		if (nh_->connected())
+		if (nh_->connected()) {
+			usb_lock();
 			nh_->logerror("IMU [MPU6050] sensor connection error!");
-		osDelay(1000);
+			usb_unlock();
+		}
+		osDelay(5000);
 		MPU6050_initialize();
 	}
 
@@ -109,9 +130,12 @@ void imuTask(void *argument) {
 
 	HMC5883L_initialize();
 	while (!HMC5883L_testConnection()) {
-		if (nh_->connected())
+		if (nh_->connected()) {
+			usb_lock();
 			nh_->logerror("IMU [HMC5883L] sensor connection error!");
-		osDelay(1000);
+			usb_unlock();
+		}
+		osDelay(5000);
 		HMC5883L_initialize();
 	}
 
@@ -124,7 +148,7 @@ void imuTask(void *argument) {
 
 	measure_flag = 0;
 	HAL_TIM_Base_Start_IT(&htim3);
-	calibrate(5); // Cycles is equals to seconds for 100Hz sample freq
+	calibrate(50); // Cycles is equals to seconds for 100Hz sample freq
 	for (;;) {
 		if (measure_flag) {
 			MPU6050_getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
@@ -157,7 +181,9 @@ void imuTask(void *argument) {
 				imu_msg.orientation = q;
 				imu_msg.angular_velocity = gyro;
 				imu_msg.linear_acceleration = acc;
+				usb_lock();
 				imu.publish(&imu_msg);
+				usb_unlock();
 			}
 		}
 	}
