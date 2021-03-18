@@ -28,10 +28,12 @@ void led_set_color(uint8_t r, uint8_t g, uint8_t b)
 static void color_cb(const ultrabot_stm::ledRequest& req,
 							ultrabot_stm::ledResponse& resp)
 {
+   //usb_lock();
    TIM4->CCR1 = (uint32_t)(req.color.a * req.color.r * 0xFFFE);
    TIM4->CCR2 = (uint32_t)(req.color.a * req.color.g * 0xFFFE);
    TIM4->CCR3 = (uint32_t)(req.color.a * req.color.b * 0xFFFE);
    resp.result = true;
+   //usb_unlock();
 }
 
 ros::ServiceServer<ultrabot_stm::ledRequest,

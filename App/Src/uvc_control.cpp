@@ -52,11 +52,13 @@ static void toggle_uvc(bool *states)
 static void uvc_cb(const ultrabot_stm::uvcRequest& req,
 							ultrabot_stm::uvcResponse& resp)
 {
+	//usb_lock();
 	// Turn-off timer handling
 	bool reqs[5] = {req.left1, req.left2, req.right1, req.right2, req.fans};
 	toggle_uvc(reqs);
 	memcpy(resp.status, uvc_data->current_status, sizeof(uvc_data->current_status));
 	memcpy(resp.timeout, uvc_data->timeout_arr, sizeof(uvc_data->timeout_arr));
+	//usb_unlock();
 }
 
 static ros::NodeHandle *nh_;
