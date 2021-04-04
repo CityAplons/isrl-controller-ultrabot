@@ -37,7 +37,7 @@ static void color_cb(const ultrabot_stm::ledRequest& req,
 }
 
 ros::ServiceServer<ultrabot_stm::ledRequest,
-					ultrabot_stm::ledResponse> rgb_service("led", &color_cb);
+					ultrabot_stm::ledResponse> rgb_service("stm/led", &color_cb);
 
 void ledControlTask(void * argument)
 {

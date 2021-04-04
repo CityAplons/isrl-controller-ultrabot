@@ -64,7 +64,7 @@ static void uvc_cb(const ultrabot_stm::uvcRequest& req,
 static ros::NodeHandle *nh_;
 
 ros::ServiceServer<ultrabot_stm::uvcRequest,
-					ultrabot_stm::uvcResponse> uvc_service("uvc", &uvc_cb);
+					ultrabot_stm::uvcResponse> uvc_service("stm/uvc", &uvc_cb);
 
 void uvcControlTask(void * argument)
 {

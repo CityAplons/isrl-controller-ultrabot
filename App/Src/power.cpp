@@ -27,8 +27,8 @@ static power_task_t * thread_data;
 
 ultrabot_stm::power msg1;
 std_msgs::Bool msg2;
-ros::Publisher power("power", &msg1);
-ros::Publisher emergency("emergency", &msg2);
+ros::Publisher power("stm/power", &msg1);
+ros::Publisher emergency("stm/emergency", &msg2);
 
 static HAL_StatusTypeDef getVoltage(power_task_t *data)
 {

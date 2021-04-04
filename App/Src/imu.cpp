@@ -24,7 +24,7 @@ extern "C" {
 #include "geometry_msgs/Vector3.h"
 
 __IO uint8_t measure_flag;
-
+extern TIM_HandleTypeDef htim3;
 static ros::NodeHandle *nh_;
 
 /*
@@ -99,8 +99,8 @@ static void calibrate_cb(const std_msgs::Empty &toggle_msg) {
 }
 
 sensor_msgs::Imu imu_msg;
-ros::Publisher imu("stm32_imu", &imu_msg);
-ros::Subscriber<std_msgs::Empty> cal("stm32_imu_calibrate", &calibrate_cb);
+ros::Publisher imu("stm/imu", &imu_msg);
+ros::Subscriber<std_msgs::Empty> cal("stm/imu_calibrate", &calibrate_cb);
 
 void imuTask(void *argument) {
 
@@ -108,6 +108,8 @@ void imuTask(void *argument) {
 	geometry_msgs::Vector3 acc;
 	geometry_msgs::Vector3 gyro;
 	geometry_msgs::Quaternion q;
+
+	nh_->subscribe(cal);
 
 	MX_I2C2_Init();
 	MX_TIM3_Init();
@@ -165,7 +167,6 @@ void imuTask(void *argument) {
 			float mz_f = mz / 1090.;
 			MadgwickAHRSupdate(gx_f, gy_f, gz_f, ax_f, ay_f, az_f, mx_f, my_f,
 					mz_f);
-			measure_flag = 0;
 
 			if (nh_->connected()) {
 				q.w = q0;
@@ -183,6 +184,7 @@ void imuTask(void *argument) {
 				imu_msg.linear_acceleration = acc;
 				usb_lock();
 				imu.publish(&imu_msg);
+				nh_->spinOnce();
 				usb_unlock();
 			}
 		}
@@ -195,7 +197,6 @@ void imuTask(void *argument) {
 uint32_t IMUManagerTaskCreate(ros::NodeHandle *nh) {
 	nh_ = nh;
 	nh_->advertise(imu);
-	nh_->subscribe(cal);
 
 	osThreadId_t imuManagerHandle;
 	const osThreadAttr_t imu_attributes = { name : "IMU", .attr_bits =

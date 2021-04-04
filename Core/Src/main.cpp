@@ -123,6 +123,7 @@ int main(void) {
 	MX_USB_DEVICE_Init();
 	/* USER CODE BEGIN 2 */
 	/* Init scheduler */
+	//HAL_NVIC_SetPriorityGrouping(4);
 	osKernelInitialize(); /* Call init function for freertos objects (in freertos.c) */
 	MX_FREERTOS_Init();
 
@@ -136,9 +137,6 @@ int main(void) {
 	if (UsonicManagerTaskCreate(&nh))
 		while (1)
 			;
-	if (IMUManagerTaskCreate(&nh))
-		while (1)
-			;
 	if (LEDManagerTaskCreate(&nh))
 		while (1)
 			;
@@ -148,6 +146,9 @@ int main(void) {
 	if (UVCManagerTaskCreate(&nh))
 		while (1)
 			;
+	if (IMUManagerTaskCreate(&nh))
+			while (1)
+				;
 	/* USER CODE END 2 */
 
 	/* Start scheduler */
