@@ -47,13 +47,11 @@
 /* USER CODE BEGIN Variables */
 
 /* USER CODE END Variables */
-/* Definitions for getInfoTask */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 
 /* USER CODE END FunctionPrototypes */
-
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -93,6 +91,7 @@ __weak void vApplicationMallocFailedHook(void)
   * @retval None
   */
 void MX_FREERTOS_Init(void) {
+
 }
 
 /* Private application code --------------------------------------------------*/

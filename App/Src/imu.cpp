@@ -25,13 +25,14 @@ extern "C" {
 
 __IO uint8_t measure_flag;
 extern TIM_HandleTypeDef htim3;
+extern __IO uint8_t ros_synced;
 static ros::NodeHandle *nh_;
 
 /*
  * MPU6050 calibration procedure
  */
 static void calibrate(uint8_t cycles) {
-	if (nh_->connected()) {
+	if (ros_synced) {
 		usb_lock();
 		nh_->loginfo("IMU [MPU6050] gyroscope calibration started!");
 		usb_unlock();
@@ -84,7 +85,7 @@ static void calibrate(uint8_t cycles) {
 		MPU6050_setYGyroOffset(cy);
 		MPU6050_setZGyroOffset(cz);
 	}
-	if (nh_->connected()) {
+	if (ros_synced) {
 		usb_lock();
 		nh_->loginfo("IMU [MPU6050] gyroscope calibration finished!");
 		usb_unlock();
@@ -109,8 +110,6 @@ void imuTask(void *argument) {
 	geometry_msgs::Vector3 gyro;
 	geometry_msgs::Quaternion q;
 
-	nh_->subscribe(cal);
-
 	MX_I2C2_Init();
 	MX_TIM3_Init();
 
@@ -118,7 +117,7 @@ void imuTask(void *argument) {
 	MPU6050_initialize();
 
 	while (!MPU6050_testConnection()) {
-		if (nh_->connected()) {
+		if (ros_synced) {
 			usb_lock();
 			nh_->logerror("IMU [MPU6050] sensor connection error!");
 			usb_unlock();
@@ -132,7 +131,7 @@ void imuTask(void *argument) {
 
 	HMC5883L_initialize();
 	while (!HMC5883L_testConnection()) {
-		if (nh_->connected()) {
+		if (ros_synced) {
 			usb_lock();
 			nh_->logerror("IMU [HMC5883L] sensor connection error!");
 			usb_unlock();
@@ -168,7 +167,7 @@ void imuTask(void *argument) {
 			MadgwickAHRSupdate(gx_f, gy_f, gz_f, ax_f, ay_f, az_f, mx_f, my_f,
 					mz_f);
 
-			if (nh_->connected()) {
+			if (ros_synced) {
 				q.w = q0;
 				q.x = q1;
 				q.y = q2;
@@ -197,6 +196,7 @@ void imuTask(void *argument) {
 uint32_t IMUManagerTaskCreate(ros::NodeHandle *nh) {
 	nh_ = nh;
 	nh_->advertise(imu);
+	nh_->subscribe(cal);
 
 	osThreadId_t imuManagerHandle;
 	const osThreadAttr_t imu_attributes = { name : "IMU", .attr_bits =

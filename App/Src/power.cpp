@@ -21,6 +21,7 @@ extern "C"
 
 extern ADC_HandleTypeDef hadc1;
 extern I2C_HandleTypeDef hi2c1;
+extern __IO uint8_t ros_synced;
 
 static ros::NodeHandle *nh_;
 static power_task_t * thread_data;
@@ -84,7 +85,7 @@ void powerManagerTask(void * argument)
 		currentStatus = getVoltage(&td);
 		if(currentStatus != HAL_OK)
 		{
-			if(nh_->connected()){
+			if(ros_synced){
 				usb_lock();
 				nh_->logerror("Voltage ADC Error!");
 				usb_unlock();
@@ -103,14 +104,14 @@ void powerManagerTask(void * argument)
 		} else if (currentStatus == HAL_TIMEOUT) {
 			td.current = 0;
 			td.power_consumption= 0;
-			if(nh_->connected()) {
+			if(ros_synced) {
 				usb_lock();
 				nh_->logwarn("Current sensor connection timed out!");
 				usb_unlock();
 			}
 			osDelay(1000);
 		} else {
-			if(nh_->connected()) {
+			if(ros_synced) {
 				usb_lock();
 				nh_->logerror("Current sensor I2C connection error!");
 				usb_unlock();
@@ -118,7 +119,7 @@ void powerManagerTask(void * argument)
 			osDelay(1000);
 		}
 
-		if(nh_->connected()){
+		if(ros_synced){
 			msg1.voltage = td.voltage;
 			msg1.battery_state = td.battery_state;
 			msg1.current = td.current;

@@ -17,7 +17,7 @@ extern "C" {
 #include "usonics.h"
 #include "std_msgs/UInt16MultiArray.h"
 
-__IO osEventFlagsId_t us_event_flag;
+//__IO osEventFlagsId_t us_event_flag;
 
 static ros::NodeHandle *nh_;
 static us_task_t *thread_data;
@@ -49,7 +49,7 @@ void UsonicManagerTask(void *argument) {
 	td.state = 0;
 	thread_data = &td;
 
-	uint32_t flags = 0b0;
+	//uint32_t flags = 0b0;
 
 	msg.layout.dim_length = 1;
 	msg.layout.data_offset = 0;
@@ -76,52 +76,53 @@ void UsonicManagerTask(void *argument) {
 				td.state = 1;
 			}
 
-			usb_lock();
 			memcpy(msg.data, td.data, sizeof(uint16_t) * NUMBER_OF_SENSORS);
+			usb_lock();
 			usonics.publish(&msg);
 			usb_unlock();
-			osDelay(60);
+			osDelay(50);
+
 
 			/*
-			 //Wait for interrupt response
-			 flags = osEventFlagsWait(us_event_flag, 0b11, osFlagsWaitAll,
-			 osWaitForever);
+			//Wait for interrupt response
+			flags = osEventFlagsWait(us_event_flag, 0b11, osFlagsWaitAll,
+			osWaitForever);
 
-			 // Waiting for flags from both interrupts
-			 usb_lock();
-			 if (flags == 0b11) {
-			 memcpy(msg.data, td.data, sizeof(uint16_t) * NUMBER_OF_SENSORS);
-			 usonics.publish(&msg);
-			 usb_unlock();
-			 flags = osEventFlagsClear(us_event_flag, 0b11);
-			 } else if (flags == 0b01) {
-			 char msg_arr[16 + sizeof(td.front_counter)];
-			 strncpy(msg_arr, "Front US stuck: ", sizeof(msg_arr) - 1);
-			 msg_arr[sizeof(msg_arr) - 1] = '\0';
-			 sprintf(&msg_arr[15], "%d", td.front_counter);
-			 nh_->logwarn(msg_arr);
-			 usb_unlock();
-			 flags = osEventFlagsClear(us_event_flag, 0b01);
-			 } else if (flags == 0b10) {
-			 char msg_arr[15 + sizeof(td.rear_counter)];
-			 strncpy(msg_arr, "Rear US stuck: ", sizeof(msg_arr) - 1);
-			 msg_arr[sizeof(msg_arr) - 1] = '\0';
-			 sprintf(&msg_arr[14], "%d", td.rear_counter);
-			 nh_->logwarn(msg_arr);
-			 usb_unlock();
-			 flags = osEventFlagsClear(us_event_flag, 0b10);
-			 } else if (flags == (uint32_t) osErrorTimeout) {
-			 nh_->logerror("Ultrasonic sensors data read timeout!");
-			 usb_unlock();
-			 osDelay(2000);
-			 flags = osEventFlagsClear(us_event_flag,
-			 (uint32_t) osErrorTimeout);
-			 } else {
-			 nh_->logerror("[UsonicManagerTask] task error!");
-			 usb_unlock();
-			 osDelay(2000);
-			 }
-			 */
+			// Waiting for flags from both interrupts
+			usb_lock();
+			if (flags == 0b11) {
+				memcpy(msg.data, td.data, sizeof(uint16_t) * NUMBER_OF_SENSORS);
+				usonics.publish(&msg);
+				usb_unlock();
+				flags = osEventFlagsClear(us_event_flag, 0b11);
+			} else if (flags == 0b01) {
+				char msg_arr[16 + sizeof(td.front_counter)];
+				strncpy(msg_arr, "Front US stuck: ", sizeof(msg_arr) - 1);
+				msg_arr[sizeof(msg_arr) - 1] = '\0';
+				sprintf(&msg_arr[15], "%d", td.front_counter);
+				nh_->logwarn(msg_arr);
+				usb_unlock();
+				flags = osEventFlagsClear(us_event_flag, 0b01);
+			} else if (flags == 0b10) {
+				char msg_arr[15 + sizeof(td.rear_counter)];
+				strncpy(msg_arr, "Rear US stuck: ", sizeof(msg_arr) - 1);
+				msg_arr[sizeof(msg_arr) - 1] = '\0';
+				sprintf(&msg_arr[14], "%d", td.rear_counter);
+				nh_->logwarn(msg_arr);
+				usb_unlock();
+				flags = osEventFlagsClear(us_event_flag, 0b10);
+			} else if (flags == (uint32_t) osErrorTimeout) {
+				nh_->logerror("Ultrasonic sensors data read timeout!");
+				usb_unlock();
+				osDelay(2000);
+				flags = osEventFlagsClear(us_event_flag,
+						(uint32_t) osErrorTimeout);
+			} else {
+				nh_->logerror("[UsonicManagerTask] task error!");
+				usb_unlock();
+				osDelay(2000);
+			}*/
+
 		} else {
 			td.state = 0;
 			osDelay(100);
@@ -133,10 +134,10 @@ uint32_t UsonicManagerTaskCreate(ros::NodeHandle *nh) {
 	nh_ = nh;
 	nh_->advertise(usonics);
 
-	us_event_flag = osEventFlagsNew(NULL);
+	/*us_event_flag = osEventFlagsNew(NULL);
 	if (us_event_flag == NULL) {
 		return 1;
-	}
+	}*/
 
 	osThreadId_t usonicManagerHandle;
 	const osThreadAttr_t usonicManager_attributes = { name : "usonicManager",
@@ -180,7 +181,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 			if (thread_data->front_counter >= SENSORS_PER_CHANNEL) {
 				thread_data->front_counter = 0;
 				// Front sensor data collected
-				osEventFlagsSet(us_event_flag, 0b10);
+				//osEventFlagsSet(us_event_flag, 0b10);
 			}
 			uint16_t pinMask = thread_data->front_counter;
 			// Turn off unused pins
@@ -206,7 +207,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 			if (thread_data->rear_counter >= SENSORS_PER_CHANNEL) {
 				thread_data->rear_counter = 0;
 				// Front sensor data collected
-				osEventFlagsSet(us_event_flag, 0b01);
+				//osEventFlagsSet(us_event_flag, 0b01);
 			}
 			uint16_t pinMask = thread_data->rear_counter;
 			// Turn off unused pins

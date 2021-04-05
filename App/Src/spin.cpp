@@ -8,6 +8,7 @@
 extern "C" {
 #include "FreeRTOS.h"
 #include "task.h"
+#include "tim.h"
 #include "cmsis_os.h"
 }
 
@@ -16,15 +17,21 @@ extern "C" {
 
 __IO uint8_t ros_synced;
 
+extern TIM_HandleTypeDef htim6;
+
 static ros::NodeHandle *nh_;
 
 static void sync_cb(const std_msgs::Empty &msg) {
 	ros_synced = 1;
+	__HAL_TIM_SET_COUNTER(&htim6, 0);
 }
 
 ros::Subscriber<std_msgs::Empty> sync("stm/sync", &sync_cb);
 
 void RosSpinTask(void *argument) {
+	MX_TIM6_Init();
+	HAL_TIM_Base_Start_IT(&htim6);
+
 	nh_->setSpinTimeout(200);
 	ros_synced = 0;
 	for (;;) {

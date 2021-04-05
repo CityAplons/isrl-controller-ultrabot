@@ -17,6 +17,8 @@ extern "C"
 
 static uvc_task_t * uvc_data;
 
+extern __IO uint8_t ros_synced;
+
 void disableAll()
 {
 	HAL_GPIO_WritePin(GPIOE, RL0_Pin|RL1_Pin|RL2_Pin|RL3_Pin|RL4_Pin|RL5_Pin|RL6_Pin, GPIO_PIN_RESET);
@@ -77,7 +79,7 @@ void uvcControlTask(void * argument)
 
 	for(;;)
 	{
-		if (nh_->connected()){
+		if (ros_synced){
 			updateStates();
 			osDelay(100);
 		} else {

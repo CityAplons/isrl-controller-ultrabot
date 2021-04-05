@@ -39,6 +39,7 @@
 
 #include "ros/publisher.h"
 #include "ros/subscriber.h"
+#include "main.h"
 
 namespace ros
 {
@@ -60,9 +61,11 @@ public:
   // these refer to the subscriber
   virtual void callback(unsigned char *data) override
   {
+	usb_lock();
     req.deserialize(data);
     (obj_->*cb_)(req, resp);
     pub.publish(&resp);
+    usb_unlock();
   }
   virtual const char * getMsgType() override
   {
@@ -101,9 +104,11 @@ public:
   // these refer to the subscriber
   virtual void callback(unsigned char *data) override
   {
+	usb_lock();
     req.deserialize(data);
     cb_(req, resp);
     pub.publish(&resp);
+    usb_unlock();
   }
   virtual const char * getMsgType() override
   {
