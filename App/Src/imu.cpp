@@ -100,7 +100,7 @@ static void calibrate_cb(const std_msgs::Empty &toggle_msg) {
 
 sensor_msgs::Imu imu_msg;
 ros::Publisher imu("stm/imu", &imu_msg);
-ros::Subscriber<std_msgs::Empty> cal("stm/imu_calibrate", &calibrate_cb);
+ros::Subscriber<std_msgs::Empty> cal("stm/imu/calibrate", &calibrate_cb);
 
 void imuTask(void *argument) {
 
@@ -184,9 +184,9 @@ void imuTask(void *argument) {
 				imu_msg.linear_acceleration = acc;
 				usb_lock();
 				imu.publish(&imu_msg);
-				nh_->spinOnce();
 				usb_unlock();
 			}
+			measure_flag = 0;
 		}
 	}
 }
@@ -201,7 +201,7 @@ uint32_t IMUManagerTaskCreate(ros::NodeHandle *nh) {
 	osThreadId_t imuManagerHandle;
 	const osThreadAttr_t imu_attributes = { name : "IMU", .attr_bits =
 	osThreadDetached, .cb_mem = NULL, .cb_size = 0, .stack_mem = NULL,
-			.stack_size = 256 * 4, .priority = (osPriority_t) osPriorityNormal,
+			.stack_size = 256 * 4, .priority = (osPriority_t) osPriorityLow,
 			.tz_module = 0, .reserved = 0 };
 
 	imuManagerHandle = osThreadNew(imuTask, NULL, &imu_attributes);

@@ -13,12 +13,22 @@ extern "C" {
 
 #include "spin.h"
 
+__IO uint8_t ros_synced;
+
 static ros::NodeHandle *nh_;
 
+static void sync_cb(const std_msgs::Empty &msg) {
+	ros_synced = 1;
+}
+
+ros::Subscriber<std_msgs::Empty> sync("stm/sync", &sync_cb);
+
 void RosSpinTask(void *argument) {
+	nh_->setSpinTimeout(200);
+	ros_synced = 0;
 	for (;;) {
 		nh_->spinOnce();
-		osDelay(2);
+		osDelay(1);
 	}
 }
 
@@ -27,6 +37,7 @@ void RosSpinTask(void *argument) {
  */
 uint32_t RosSpinTaskCreate(ros::NodeHandle *nh) {
 	nh_ = nh;
+	nh_->subscribe(sync);
 
 	osThreadId_t RosSpinHandle;
 	const osThreadAttr_t rosSpin_attributes = { name : "rosSpin", .attr_bits =

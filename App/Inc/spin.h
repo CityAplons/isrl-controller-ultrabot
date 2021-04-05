@@ -11,6 +11,8 @@
 #include "stdint.h"
 #include "ros.h"
 
+extern __IO uint8_t ros_synced;
+
 uint32_t RosSpinTaskCreate(ros::NodeHandle *nh);
 
 #endif /* INC_SPIN_H_ */

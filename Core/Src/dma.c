@@ -43,8 +43,8 @@ void MX_DMA_Init(void) {
 	/* DMA interrupt init */
 	/* DMA1_Stream2_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA1_Stream2_IRQn,
-			configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY+2,
-			configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY+2);
+			configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY+4,
+			configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY+4);
 	HAL_NVIC_EnableIRQ(DMA1_Stream2_IRQn);
 	/* DMA1_Stream5_IRQn interrupt configuration */
 	HAL_NVIC_SetPriority(DMA1_Stream5_IRQn,
