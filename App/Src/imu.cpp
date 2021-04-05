@@ -9,7 +9,7 @@ extern "C" {
 #include "FreeRTOS.h"
 #include "task.h"
 #include "cmsis_os.h"
-#include "i2c1.h"
+#include "i2c.h"
 #include "tim.h"
 #include "MadgwickAHRS.h"
 #include "I2Cdev.h"

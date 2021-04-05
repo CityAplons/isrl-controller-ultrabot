@@ -229,7 +229,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 		// I2C refresh rate (I2C_HZ)
 		measure_flag = 1;
 	}
-	if (htim->Instance == TIM3) {
+	if (htim->Instance == TIM6) {
 		// ROS Sync handler
 		ros_synced = 0;
 	}

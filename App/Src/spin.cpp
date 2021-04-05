@@ -12,6 +12,7 @@ extern "C" {
 }
 
 #include "spin.h"
+#include "std_msgs/Empty.h"
 
 __IO uint8_t ros_synced;
 

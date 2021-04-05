@@ -10,7 +10,7 @@ extern "C"
 	#include "FreeRTOS.h"
 	#include "task.h"
 	#include "cmsis_os.h"
-	#include "i2c1.h"
+	#include "i2c.h"
 	#include "adc.h"
 	#include "gpio.h"
 }

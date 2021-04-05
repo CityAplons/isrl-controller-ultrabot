@@ -22,6 +22,7 @@ __IO osEventFlagsId_t us_event_flag;
 static ros::NodeHandle *nh_;
 static us_task_t *thread_data;
 
+extern __IO uint8_t ros_synced;
 extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart2;
 
