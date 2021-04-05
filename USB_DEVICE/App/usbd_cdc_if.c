@@ -21,7 +21,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "usbd_cdc_if.h"
-#include "ringbuffer.h"
 
 /* USER CODE BEGIN INCLUDE */
 

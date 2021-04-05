@@ -18,6 +18,8 @@ extern "C"
 
 static ros::NodeHandle *nh_;
 
+extern __IO uint8_t ros_synced;
+
 void led_set_color(uint8_t r, uint8_t g, uint8_t b)
 {
 	TIM4->CCR1 = r * 0xFF - 2;
@@ -51,7 +53,7 @@ void ledControlTask(void * argument)
 	int8_t direction = 0;
 	for(;;)
 	{
-		if (!nh_->connected()){
+		if (!ros_synced){
 			if (breath_value <= 20) direction = 5;
 			if (breath_value >= 240) direction = -5;
 			breath_value += direction;

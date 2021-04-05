@@ -17,11 +17,12 @@ extern "C" {
 #include "usonics.h"
 #include "std_msgs/UInt16MultiArray.h"
 
-__IO osEventFlagsId_t us_event_flag;
+//__IO osEventFlagsId_t us_event_flag;
 
 static ros::NodeHandle *nh_;
 static us_task_t *thread_data;
 
+extern __IO uint8_t ros_synced;
 extern UART_HandleTypeDef huart4;
 extern UART_HandleTypeDef huart2;
 
@@ -30,7 +31,7 @@ ros::Publisher usonics("stm/rangefinders", &msg);
 
 static uint8_t check_crc(uint8_t *data) {
 	if (data[0] == 0xFF) {
-		uint8_t crc = (uint8_t) (data[1] + data[2]);
+		uint8_t crc = (uint8_t) (data[0] + data[1] + data[2]);
 		if (crc == data[3])
 			return 1;
 	}
@@ -48,7 +49,7 @@ void UsonicManagerTask(void *argument) {
 	td.state = 0;
 	thread_data = &td;
 
-	uint32_t flags = 0b0;
+	//uint32_t flags = 0b0;
 
 	msg.layout.dim_length = 1;
 	msg.layout.data_offset = 0;
@@ -65,18 +66,9 @@ void UsonicManagerTask(void *argument) {
 	MX_UART4_Init();
 
 	for (;;) {
-		if (nh_->connected()) {
+		if (ros_synced) {
 
 			if (td.state == 0) {
-				//Registering buffers to receive sensors data
-				if (HAL_UART_Receive_DMA(&huart2, td.front_rx_buffer,
-				RX_BUFFER_LENGTH) != HAL_OK) {
-					Error_Handler();
-				}
-				if (HAL_UART_Receive_DMA(&huart4, td.rear_rx_buffer,
-				RX_BUFFER_LENGTH) != HAL_OK) {
-					Error_Handler();
-				}
 				// Sending first requests
 				HAL_UART_Transmit_IT(&huart2, &td.req, 1);
 				HAL_UART_Transmit_IT(&huart4, &td.req, 1);
@@ -84,14 +76,24 @@ void UsonicManagerTask(void *argument) {
 				td.state = 1;
 			}
 
+			memcpy(msg.data, td.data, sizeof(uint16_t) * NUMBER_OF_SENSORS);
+			usb_lock();
+			usonics.publish(&msg);
+			usb_unlock();
+			osDelay(50);
+
+
+			/*
 			//Wait for interrupt response
-			flags = osEventFlagsWait(us_event_flag, 0b11, osFlagsWaitAll, 1000);
+			flags = osEventFlagsWait(us_event_flag, 0b11, osFlagsWaitAll,
+			osWaitForever);
 
 			// Waiting for flags from both interrupts
 			usb_lock();
 			if (flags == 0b11) {
 				memcpy(msg.data, td.data, sizeof(uint16_t) * NUMBER_OF_SENSORS);
 				usonics.publish(&msg);
+				usb_unlock();
 				flags = osEventFlagsClear(us_event_flag, 0b11);
 			} else if (flags == 0b01) {
 				char msg_arr[16 + sizeof(td.front_counter)];
@@ -99,6 +101,7 @@ void UsonicManagerTask(void *argument) {
 				msg_arr[sizeof(msg_arr) - 1] = '\0';
 				sprintf(&msg_arr[15], "%d", td.front_counter);
 				nh_->logwarn(msg_arr);
+				usb_unlock();
 				flags = osEventFlagsClear(us_event_flag, 0b01);
 			} else if (flags == 0b10) {
 				char msg_arr[15 + sizeof(td.rear_counter)];
@@ -106,18 +109,20 @@ void UsonicManagerTask(void *argument) {
 				msg_arr[sizeof(msg_arr) - 1] = '\0';
 				sprintf(&msg_arr[14], "%d", td.rear_counter);
 				nh_->logwarn(msg_arr);
+				usb_unlock();
 				flags = osEventFlagsClear(us_event_flag, 0b10);
 			} else if (flags == (uint32_t) osErrorTimeout) {
-				nh_->logerror("Ultrasonic data read timeout!");
+				nh_->logerror("Ultrasonic sensors data read timeout!");
+				usb_unlock();
 				osDelay(2000);
 				flags = osEventFlagsClear(us_event_flag,
 						(uint32_t) osErrorTimeout);
 			} else {
 				nh_->logerror("[UsonicManagerTask] task error!");
+				usb_unlock();
 				osDelay(2000);
-			}
-			nh_->spinOnce();
-			usb_unlock();
+			}*/
+
 		} else {
 			td.state = 0;
 			osDelay(100);
@@ -129,17 +134,17 @@ uint32_t UsonicManagerTaskCreate(ros::NodeHandle *nh) {
 	nh_ = nh;
 	nh_->advertise(usonics);
 
-	us_event_flag = osEventFlagsNew(NULL);
+	/*us_event_flag = osEventFlagsNew(NULL);
 	if (us_event_flag == NULL) {
-		; // Event Flags object not created, handle failure
-	}
+		return 1;
+	}*/
 
 	osThreadId_t usonicManagerHandle;
 	const osThreadAttr_t usonicManager_attributes = { name : "usonicManager",
 			.attr_bits = osThreadDetached, .cb_mem = NULL, .cb_size = 0,
 			.stack_mem = NULL, .stack_size = 256 * 4, .priority =
-					(osPriority_t) osPriorityAboveNormal, .tz_module = 0,
-			.reserved = 0 };
+					(osPriority_t) osPriorityNormal, .tz_module = 0, .reserved =
+					0 };
 
 	usonicManagerHandle = osThreadNew(UsonicManagerTask, NULL,
 			&usonicManager_attributes);
@@ -150,20 +155,33 @@ uint32_t UsonicManagerTaskCreate(ros::NodeHandle *nh) {
 	return 0;
 }
 
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
+	if (huart->Instance == USART2) {
+		if (HAL_UART_Receive_DMA(&huart2, thread_data->front_rx_buffer,
+		RX_BUFFER_LENGTH) != HAL_OK) {
+			Error_Handler();
+		}
+	}
+	if (huart->Instance == UART4) {
+		if (HAL_UART_Receive_DMA(&huart4, thread_data->rear_rx_buffer,
+		RX_BUFFER_LENGTH) != HAL_OK) {
+			Error_Handler();
+		}
+	}
+}
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART2) {
 		if (check_crc(thread_data->front_rx_buffer)) {
 			thread_data->data[thread_data->front_counter] =
 					thread_data->front_rx_buffer[1] << 8
 							| thread_data->front_rx_buffer[2];
-			//if (thread_data->data[thread_data->front_counter] == 0)
-			//	thread_data->data[thread_data->front_counter] = 5000;
 			thread_data->front_counter++;
 			// Updating sensor address 0-0b1,1-0b10, 2-0b11, 3-0b100, 4-0b101
 			if (thread_data->front_counter >= SENSORS_PER_CHANNEL) {
 				thread_data->front_counter = 0;
 				// Front sensor data collected
-				osEventFlagsSet(us_event_flag, 0b10);
+				//osEventFlagsSet(us_event_flag, 0b10);
 			}
 			uint16_t pinMask = thread_data->front_counter;
 			// Turn off unused pins
@@ -173,8 +191,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		}
 
 		if (thread_data->state == 1) {
-			HAL_UART_Receive_DMA(&huart2, thread_data->front_rx_buffer,
-			RX_BUFFER_LENGTH);
 			HAL_UART_Transmit_IT(&huart2, &thread_data->req, 1);
 		}
 	}
@@ -186,14 +202,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 			uint8_t id = thread_data->rear_counter + offset;
 			thread_data->data[id] = thread_data->rear_rx_buffer[1] << 8
 					| thread_data->rear_rx_buffer[2];
-			//if (thread_data->data[id] == 0)
-			//	thread_data->data[id] = 5000;
 			thread_data->rear_counter++;
 			// Updating sensor address 0-0b1,1-0b10, 2-0b11, 3-0b100, 4-0b101
 			if (thread_data->rear_counter >= SENSORS_PER_CHANNEL) {
 				thread_data->rear_counter = 0;
 				// Front sensor data collected
-				osEventFlagsSet(us_event_flag, 0b01);
+				//osEventFlagsSet(us_event_flag, 0b01);
 			}
 			uint16_t pinMask = thread_data->rear_counter;
 			// Turn off unused pins
@@ -203,8 +217,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 		}
 
 		if (thread_data->state == 1) {
-			HAL_UART_Receive_DMA(&huart4, thread_data->rear_rx_buffer,
-			RX_BUFFER_LENGTH);
 			HAL_UART_Transmit_IT(&huart4, &thread_data->req, 1);
 		}
 

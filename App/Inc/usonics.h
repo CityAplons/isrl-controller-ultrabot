@@ -25,6 +25,8 @@ typedef struct {
         uint8_t state;
 } us_task_t;
 
+extern __IO osEventFlagsId_t us_event_flag;
+
 uint32_t UsonicManagerTaskCreate(ros::NodeHandle *nh);
 
 #endif /* INC_USONICS_H_ */
