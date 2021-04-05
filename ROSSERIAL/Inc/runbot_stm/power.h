@@ -1,12 +1,12 @@
-#ifndef _ROS_ultrabot_stm_power_h
-#define _ROS_ultrabot_stm_power_h
+#ifndef _ROS_runbot_stm_power_h
+#define _ROS_runbot_stm_power_h
 
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include "ros/msg.h"
 
-namespace ultrabot_stm
+namespace runbot_stm
 {
 
   class power : public ros::Msg
@@ -104,7 +104,7 @@ namespace ultrabot_stm
      return offset;
     }
 
-    virtual const char * getType() override { return "ultrabot_stm/power"; };
+    virtual const char * getType() override { return "runbot_stm/power"; };
     virtual const char * getMD5() override { return "3e17f18495d90b28ad85608062e408f2"; };
 
   };

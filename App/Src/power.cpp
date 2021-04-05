@@ -16,7 +16,7 @@ extern "C"
 }
 
 #include "power.h"
-#include "ultrabot_stm/power.h"
+#include "runbot_stm/power.h"
 #include "std_msgs/Bool.h"
 
 extern ADC_HandleTypeDef hadc1;
@@ -26,7 +26,7 @@ extern __IO uint8_t ros_synced;
 static ros::NodeHandle *nh_;
 static power_task_t * thread_data;
 
-ultrabot_stm::power msg1;
+runbot_stm::power msg1;
 std_msgs::Bool msg2;
 ros::Publisher power("stm/power", &msg1);
 ros::Publisher emergency("stm/emergency", &msg2);

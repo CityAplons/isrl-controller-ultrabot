@@ -6,10 +6,10 @@
 #include "ros/msg.h"
 #include "std_msgs/ColorRGBA.h"
 
-namespace ultrabot_stm
+namespace runbot_stm
 {
 
-static const char LED[] = "ultrabot_stm/led";
+static const char LED[] = "runbot_stm/led";
 
   class ledRequest : public ros::Msg
   {

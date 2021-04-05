@@ -12,13 +12,13 @@
 #include "ros.h"
 
 // Used pins, set-up: [UVC left1, UVC left2, UVC right1, UVC right2, Fans]
-#define USED_PINS RL0_Pin, RL1_Pin, RL2_Pin, RL3_Pin, RL4_Pin
+#define USED_PINS RL0_Pin, RL1_Pin, RL2_Pin, RL3_Pin, RL4_Pin, RL5_Pin, RL6_Pin
 //Turn-off timeouts *100 ms
-#define TIMEOUTS 30, 30, 30, 30, 0
+#define TIMEOUTS 30, 30, 30, 30, 30, 30, 30
 
 typedef struct {
-	uint8_t timeout_arr[5];
-	bool current_status[5];
+	uint8_t timeout_arr[7];
+	bool current_status[7];
 } uvc_task_t;
 
 uint32_t UVCManagerTaskCreate(ros::NodeHandle *nh);
