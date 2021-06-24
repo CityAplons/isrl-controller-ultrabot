@@ -11,8 +11,8 @@
 #include "stdint.h"
 #include "ros.h"
 
-#define NUMBER_OF_SENSORS 		10
-#define SENSORS_PER_CHANNEL 	5
+#define NUMBER_OF_SENSORS 		8
+#define SENSORS_PER_CHANNEL 	4
 #define RX_BUFFER_LENGTH 		4
 
 typedef struct {
