@@ -20,16 +20,16 @@ static ros::NodeHandle *nh_;
 extern __IO uint8_t ros_synced;
 
 void led_set_color(uint8_t r, uint8_t g, uint8_t b) {
-	TIM4->CCR1 = r * 0xFF - 2;
-	TIM4->CCR2 = g * 0xFF - 2;
+	TIM4->CCR1 = g * 0xFF - 2;
+	TIM4->CCR2 = r * 0xFF - 2;
 	TIM4->CCR3 = b * 0xFF - 2;
 }
 
 static void color_cb(const runbot_stm::ledRequest &req,
 		runbot_stm::ledResponse &resp) {
 	//usb_lock();
-	TIM4->CCR1 = (uint32_t) (req.color.a * req.color.r * 0xFFFE);
-	TIM4->CCR2 = (uint32_t) (req.color.a * req.color.g * 0xFFFE);
+	TIM4->CCR1 = (uint32_t) (req.color.a * req.color.g * 0xFFFE);
+	TIM4->CCR2 = (uint32_t) (req.color.a * req.color.r * 0xFFFE);
 	TIM4->CCR3 = (uint32_t) (req.color.a * req.color.b * 0xFFFE);
 	resp.result = true;
 	//usb_unlock();
