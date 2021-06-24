@@ -146,9 +146,9 @@ int main(void) {
 	if (UVCManagerTaskCreate(&nh))
 		while (1)
 			;
-	if (IMUManagerTaskCreate(&nh))
-			while (1)
-				;
+	//if (IMUManagerTaskCreate(&nh))
+	//		while (1)
+	//			;
 	/* USER CODE END 2 */
 
 	/* Start scheduler */
