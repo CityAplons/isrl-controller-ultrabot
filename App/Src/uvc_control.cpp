@@ -50,7 +50,6 @@ static void toggle_uvc(bool *states) {
 
 static void uvc_cb(const runbot_stm::relayRequest &req,
 		runbot_stm::relayResponse &resp) {
-	//usb_lock();
 	// Turn-off timer handling
 	bool reqs[7] = { req.relay1, req.relay2, req.relay3, req.relay4, req.relay5,
 			req.relay6, req.relay7 };
@@ -58,7 +57,6 @@ static void uvc_cb(const runbot_stm::relayRequest &req,
 	memcpy(resp.status, uvc_data->current_status,
 			sizeof(uvc_data->current_status));
 	memcpy(resp.timeout, uvc_data->timeout_arr, sizeof(uvc_data->timeout_arr));
-	//usb_unlock();
 }
 
 static ros::NodeHandle *nh_;

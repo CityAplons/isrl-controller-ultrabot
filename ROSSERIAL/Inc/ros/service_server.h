@@ -39,6 +39,7 @@
 
 #include "ros/publisher.h"
 #include "ros/subscriber.h"
+#include "main.h"
 
 namespace ros
 {
@@ -62,7 +63,9 @@ public:
   {
     req.deserialize(data);
     (obj_->*cb_)(req, resp);
+    usb_lock();
     pub.publish(&resp);
+    usb_unlock();
   }
   virtual const char * getMsgType()
   {
@@ -103,7 +106,9 @@ public:
   {
     req.deserialize(data);
     cb_(req, resp);
+    usb_lock();
     pub.publish(&resp);
+    usb_unlock();
   }
   virtual const char * getMsgType()
   {
