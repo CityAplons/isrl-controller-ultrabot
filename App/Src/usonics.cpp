@@ -47,8 +47,12 @@ void UsonicManagerTask(void *argument) {
 	td.rear_counter = 0;
 	td.req = 0x55; // Ultrasonic request message
 	td.state = 0;
+	td.rear_err = OK;
+	td.front_err = OK;
 	thread_data = &td;
-
+	for(int i = 0; i < NUMBER_OF_SENSORS; i++){
+		td.data[i]=0;
+	}
 	//uint32_t flags = 0b0;
 
 	msg.layout.dim_length = 1;
@@ -58,12 +62,14 @@ void UsonicManagerTask(void *argument) {
 	msg.layout.dim[0].size = NUMBER_OF_SENSORS;
 	msg.layout.dim[0].stride = 1 * NUMBER_OF_SENSORS;
 	msg.data_length = NUMBER_OF_SENSORS;
-	msg.data = (uint16_t*) malloc(sizeof(uint16_t) * NUMBER_OF_SENSORS);
+	msg.data = new uint16_t[NUMBER_OF_SENSORS];
 
 	// Hardware peripheral initialization
 	MX_DMA_Init();
 	MX_USART2_UART_Init();
 	MX_UART4_Init();
+
+	char msg_arr[25];
 
 	for (;;) {
 		if (ros_synced) {
@@ -76,53 +82,57 @@ void UsonicManagerTask(void *argument) {
 				td.state = 1;
 			}
 
-			memcpy(msg.data, td.data, sizeof(uint16_t) * NUMBER_OF_SENSORS);
-			usb_lock();
-			usonics.publish(&msg);
-			usb_unlock();
-			osDelay(50);
-
-
-			/*
-			//Wait for interrupt response
-			flags = osEventFlagsWait(us_event_flag, 0b11, osFlagsWaitAll,
-			osWaitForever);
-
-			// Waiting for flags from both interrupts
-			usb_lock();
-			if (flags == 0b11) {
-				memcpy(msg.data, td.data, sizeof(uint16_t) * NUMBER_OF_SENSORS);
-				usonics.publish(&msg);
-				usb_unlock();
-				flags = osEventFlagsClear(us_event_flag, 0b11);
-			} else if (flags == 0b01) {
-				char msg_arr[16 + sizeof(td.front_counter)];
-				strncpy(msg_arr, "Front US stuck: ", sizeof(msg_arr) - 1);
-				msg_arr[sizeof(msg_arr) - 1] = '\0';
-				sprintf(&msg_arr[15], "%d", td.front_counter);
-				nh_->logwarn(msg_arr);
-				usb_unlock();
-				flags = osEventFlagsClear(us_event_flag, 0b01);
-			} else if (flags == 0b10) {
-				char msg_arr[15 + sizeof(td.rear_counter)];
-				strncpy(msg_arr, "Rear US stuck: ", sizeof(msg_arr) - 1);
-				msg_arr[sizeof(msg_arr) - 1] = '\0';
-				sprintf(&msg_arr[14], "%d", td.rear_counter);
-				nh_->logwarn(msg_arr);
-				usb_unlock();
-				flags = osEventFlagsClear(us_event_flag, 0b10);
-			} else if (flags == (uint32_t) osErrorTimeout) {
-				nh_->logerror("Ultrasonic sensors data read timeout!");
-				usb_unlock();
-				osDelay(2000);
-				flags = osEventFlagsClear(us_event_flag,
-						(uint32_t) osErrorTimeout);
+			if ( td.rear_err == OK )
+			{
+				if (td.front_err == OK)
+				{
+					memcpy(msg.data, td.data, sizeof(uint16_t) * NUMBER_OF_SENSORS);
+					usb_lock();
+					usonics.publish(&msg);
+					usb_unlock();
+				} else {
+					strncpy(msg_arr, "Front ultrasonic error:", sizeof(msg_arr) - 1);
+					sprintf(&msg_arr[23], "%d", td.front_counter);
+					msg_arr[sizeof(msg_arr) - 1] = '\0';
+					usb_lock();
+					nh_->logerror(msg_arr);
+					switch (td.front_err){
+						case BAD_CRC:
+							nh_->logerror("CRC mismatch!");
+							break;
+						case READ_ERROR:
+							nh_->logerror("Read Error!");
+							break;
+						case BAD_CONNECTION:
+							nh_->logerror("Bad connection!");
+							break;
+						default: break;
+					}
+					usb_unlock();
+					td.front_err = OK;
+				}
 			} else {
-				nh_->logerror("[UsonicManagerTask] task error!");
+				strncpy(msg_arr, "Rear ultrasonic error: ", sizeof(msg_arr) - 1);
+				sprintf(&msg_arr[23], "%d", td.rear_counter);
+				msg_arr[sizeof(msg_arr) - 1] = '\0';
+				usb_lock();
+				nh_->logerror(msg_arr);
+				switch (td.rear_err){
+					case BAD_CRC:
+						nh_->logerror("CRC mismatch!");
+						break;
+					case READ_ERROR:
+						nh_->logerror("Read Error!");
+						break;
+					case BAD_CONNECTION:
+						nh_->logerror("Bad connection!");
+						break;
+					default: break;
+				}
 				usb_unlock();
-				osDelay(2000);
-			}*/
-
+				td.rear_err = OK;
+			}
+			osDelay(50);
 		} else {
 			td.state = 0;
 			osDelay(100);
@@ -159,13 +169,13 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart) {
 	if (huart->Instance == USART2) {
 		if (HAL_UART_Receive_DMA(&huart2, thread_data->front_rx_buffer,
 		RX_BUFFER_LENGTH) != HAL_OK) {
-			Error_Handler();
+			thread_data->front_err = READ_ERROR;
 		}
 	}
 	if (huart->Instance == UART4) {
 		if (HAL_UART_Receive_DMA(&huart4, thread_data->rear_rx_buffer,
 		RX_BUFFER_LENGTH) != HAL_OK) {
-			Error_Handler();
+			thread_data->rear_err = READ_ERROR;
 		}
 	}
 }
@@ -176,48 +186,50 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 			thread_data->data[thread_data->front_counter] =
 					thread_data->front_rx_buffer[1] << 8
 							| thread_data->front_rx_buffer[2];
-			thread_data->front_counter++;
-			// Updating sensor address 0-0b1,1-0b10, 2-0b11, 3-0b100, 4-0b101
-			if (thread_data->front_counter >= SENSORS_PER_CHANNEL) {
-				thread_data->front_counter = 0;
-				// Front sensor data collected
-				//osEventFlagsSet(us_event_flag, 0b10);
-			}
-			uint16_t pinMask = thread_data->front_counter;
-			// Turn off unused pins
-			HAL_GPIO_WritePin(GPIOE, ((0b111 ^ pinMask) << 7), GPIO_PIN_RESET);
-			// Turn on necessary pins
-			HAL_GPIO_WritePin(GPIOE, (pinMask << 7), GPIO_PIN_SET);
+		} else {
+			thread_data->front_err = BAD_CRC;
 		}
 
+		thread_data->front_counter++;
+		// Updating sensor address 0-0b1,1-0b10, 2-0b11, 3-0b100, 4-0b101
+		if (thread_data->front_counter >= SENSORS_PER_CHANNEL) {
+			thread_data->front_counter = 0;
+		}
+		uint16_t pinMask = thread_data->front_counter;
+		// Turn off unused pins
+		HAL_GPIO_WritePin(GPIOE, ((0b111 ^ pinMask) << 7), GPIO_PIN_RESET);
+		// Turn on necessary pins
+		HAL_GPIO_WritePin(GPIOE, (pinMask << 7), GPIO_PIN_SET);
+		//Continue requests
 		if (thread_data->state == 1) {
-			HAL_UART_Transmit_IT(&huart2, &thread_data->req, 1);
+			HAL_StatusTypeDef returnValue = HAL_UART_Transmit_IT(&huart2, &thread_data->req, 1);
+			if(returnValue != HAL_OK) thread_data->front_err = BAD_CONNECTION;
 		}
 	}
 	if (huart->Instance == UART4) {
-		uint8_t offset = 5;
+		uint8_t offset = SENSORS_PER_CHANNEL;
 
 		if (check_crc(thread_data->rear_rx_buffer)) {
 
 			uint8_t id = thread_data->rear_counter + offset;
 			thread_data->data[id] = thread_data->rear_rx_buffer[1] << 8
 					| thread_data->rear_rx_buffer[2];
-			thread_data->rear_counter++;
-			// Updating sensor address 0-0b1,1-0b10, 2-0b11, 3-0b100, 4-0b101
-			if (thread_data->rear_counter >= SENSORS_PER_CHANNEL) {
-				thread_data->rear_counter = 0;
-				// Front sensor data collected
-				//osEventFlagsSet(us_event_flag, 0b01);
-			}
-			uint16_t pinMask = thread_data->rear_counter;
-			// Turn off unused pins
-			HAL_GPIO_WritePin(GPIOE, ((0b111 ^ pinMask) << 10), GPIO_PIN_RESET);
-			// Turn on necessary pins
-			HAL_GPIO_WritePin(GPIOE, (pinMask << 10), GPIO_PIN_SET);
+		} else {
+			thread_data->rear_err = BAD_CRC;
 		}
-
+		thread_data->rear_counter++;
+		// Updating sensor address 0-0b1,1-0b10, 2-0b11, 3-0b100, 4-0b101
+		if (thread_data->rear_counter >= SENSORS_PER_CHANNEL) {
+			thread_data->rear_counter = 0;
+		}
+		uint16_t pinMask = thread_data->rear_counter;
+		// Turn off unused pins
+		HAL_GPIO_WritePin(GPIOE, ((0b111 ^ pinMask) << 10), GPIO_PIN_RESET);
+		// Turn on necessary pins
+		HAL_GPIO_WritePin(GPIOE, (pinMask << 10), GPIO_PIN_SET);
 		if (thread_data->state == 1) {
-			HAL_UART_Transmit_IT(&huart4, &thread_data->req, 1);
+			HAL_StatusTypeDef returnValue = HAL_UART_Transmit_IT(&huart4, &thread_data->req, 1);
+			if(returnValue != HAL_OK) thread_data->rear_err = BAD_CONNECTION;
 		}
 
 	}
