@@ -61,9 +61,9 @@ public:
   // these refer to the subscriber
   virtual void callback(unsigned char *data) override
   {
-	usb_lock();
     req.deserialize(data);
     (obj_->*cb_)(req, resp);
+    usb_lock();
     pub.publish(&resp);
     usb_unlock();
   }
@@ -104,9 +104,9 @@ public:
   // these refer to the subscriber
   virtual void callback(unsigned char *data) override
   {
-	usb_lock();
     req.deserialize(data);
     cb_(req, resp);
+    usb_lock();
     pub.publish(&resp);
     usb_unlock();
   }

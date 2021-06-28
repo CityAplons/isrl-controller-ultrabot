@@ -36,7 +36,6 @@
 #define ROS_SUBSCRIBER_H_
 
 #include "rosserial_msgs/TopicInfo.h"
-#include "main.h"
 
 namespace ros
 {
@@ -74,10 +73,8 @@ public:
 
   virtual void callback(unsigned char* data) override
   {
-	usb_lock();
     msg.deserialize(data);
     (obj_->*cb_)(msg);
-    usb_unlock();
   }
 
   virtual const char * getMsgType() override
@@ -116,10 +113,8 @@ public:
 
   virtual void callback(unsigned char* data) override
   {
-	usb_lock();
     msg.deserialize(data);
     this->cb_(msg);
-    usb_unlock();
   }
 
   virtual const char * getMsgType() override

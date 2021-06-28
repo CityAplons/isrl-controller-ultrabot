@@ -39,6 +39,7 @@
 
 #include "ros/publisher.h"
 #include "ros/subscriber.h"
+#include "main.h"
 
 namespace ros
 {
@@ -59,7 +60,9 @@ public:
     if (!pub.nh_->connected()) return;
     ret = &response;
     waiting = true;
+    usb_lock();
     pub.publish(&request);
+    usb_unlock();
     while (waiting && pub.nh_->connected())
       if (pub.nh_->spinOnce() < 0) break;
   }
