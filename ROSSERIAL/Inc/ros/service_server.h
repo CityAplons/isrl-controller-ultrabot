@@ -36,10 +36,9 @@
 #define _ROS_SERVICE_SERVER_H_
 
 #include "rosserial_msgs/TopicInfo.h"
-
+#include "main.h"
 #include "ros/publisher.h"
 #include "ros/subscriber.h"
-#include "main.h"
 
 namespace ros
 {
@@ -59,23 +58,23 @@ public:
   }
 
   // these refer to the subscriber
-  virtual void callback(unsigned char *data) override
+  virtual void callback(unsigned char *data)
   {
-	usb_lock();
     req.deserialize(data);
     (obj_->*cb_)(req, resp);
+    usb_lock();
     pub.publish(&resp);
     usb_unlock();
   }
-  virtual const char * getMsgType() override
+  virtual const char * getMsgType()
   {
     return this->req.getType();
   }
-  virtual const char * getMsgMD5() override
+  virtual const char * getMsgMD5()
   {
     return this->req.getMD5();
   }
-  virtual int getEndpointType() override
+  virtual int getEndpointType()
   {
     return rosserial_msgs::TopicInfo::ID_SERVICE_SERVER + rosserial_msgs::TopicInfo::ID_SUBSCRIBER;
   }
@@ -102,23 +101,23 @@ public:
   }
 
   // these refer to the subscriber
-  virtual void callback(unsigned char *data) override
+  virtual void callback(unsigned char *data)
   {
-	usb_lock();
     req.deserialize(data);
     cb_(req, resp);
+    usb_lock();
     pub.publish(&resp);
     usb_unlock();
   }
-  virtual const char * getMsgType() override
+  virtual const char * getMsgType()
   {
     return this->req.getType();
   }
-  virtual const char * getMsgMD5() override
+  virtual const char * getMsgMD5()
   {
     return this->req.getMD5();
   }
-  virtual int getEndpointType() override
+  virtual int getEndpointType()
   {
     return rosserial_msgs::TopicInfo::ID_SERVICE_SERVER + rosserial_msgs::TopicInfo::ID_SUBSCRIBER;
   }

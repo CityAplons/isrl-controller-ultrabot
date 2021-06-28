@@ -39,7 +39,7 @@ static const char RELAY[] = "runbot_stm/relay";
     {
     }
 
-    virtual int serialize(unsigned char *outbuffer) const override
+    virtual int serialize(unsigned char *outbuffer) const
     {
       int offset = 0;
       union {
@@ -94,7 +94,7 @@ static const char RELAY[] = "runbot_stm/relay";
       return offset;
     }
 
-    virtual int deserialize(unsigned char *inbuffer) override
+    virtual int deserialize(unsigned char *inbuffer)
     {
       int offset = 0;
       union {
@@ -156,8 +156,8 @@ static const char RELAY[] = "runbot_stm/relay";
      return offset;
     }
 
-    virtual const char * getType() override { return RELAY; };
-    virtual const char * getMD5() override { return "c362b6eec2a47a5d7dc788338e9ef5b3"; };
+    const char * getType(){ return RELAY; };
+    const char * getMD5(){ return "c362b6eec2a47a5d7dc788338e9ef5b3"; };
 
   };
 
@@ -173,7 +173,7 @@ static const char RELAY[] = "runbot_stm/relay";
     {
     }
 
-    virtual int serialize(unsigned char *outbuffer) const override
+    virtual int serialize(unsigned char *outbuffer) const
     {
       int offset = 0;
       for( uint32_t i = 0; i < 7; i++){
@@ -192,7 +192,7 @@ static const char RELAY[] = "runbot_stm/relay";
       return offset;
     }
 
-    virtual int deserialize(unsigned char *inbuffer) override
+    virtual int deserialize(unsigned char *inbuffer)
     {
       int offset = 0;
       for( uint32_t i = 0; i < 7; i++){
@@ -212,8 +212,8 @@ static const char RELAY[] = "runbot_stm/relay";
      return offset;
     }
 
-    virtual const char * getType() override { return RELAY; };
-    virtual const char * getMD5() override { return "f43ec10cb8a78b28246677b9fcd7be49"; };
+    const char * getType(){ return RELAY; };
+    const char * getMD5(){ return "f43ec10cb8a78b28246677b9fcd7be49"; };
 
   };
 

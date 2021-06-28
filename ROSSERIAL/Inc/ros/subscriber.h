@@ -36,7 +36,6 @@
 #define ROS_SUBSCRIBER_H_
 
 #include "rosserial_msgs/TopicInfo.h"
-#include "main.h"
 
 namespace ros
 {
@@ -72,23 +71,21 @@ public:
     topic_ = topic_name;
   };
 
-  virtual void callback(unsigned char* data) override
+  virtual void callback(unsigned char* data)
   {
-	usb_lock();
     msg.deserialize(data);
     (obj_->*cb_)(msg);
-    usb_unlock();
   }
 
-  virtual const char * getMsgType() override
+  virtual const char * getMsgType()
   {
     return this->msg.getType();
   }
-  virtual const char * getMsgMD5() override
+  virtual const char * getMsgMD5()
   {
     return this->msg.getMD5();
   }
-  virtual int getEndpointType() override
+  virtual int getEndpointType()
   {
     return endpoint_;
   }
@@ -114,23 +111,21 @@ public:
     topic_ = topic_name;
   };
 
-  virtual void callback(unsigned char* data) override
+  virtual void callback(unsigned char* data)
   {
-	usb_lock();
     msg.deserialize(data);
     this->cb_(msg);
-    usb_unlock();
   }
 
-  virtual const char * getMsgType() override
+  virtual const char * getMsgType()
   {
     return this->msg.getType();
   }
-  virtual const char * getMsgMD5() override
+  virtual const char * getMsgMD5()
   {
     return this->msg.getMD5();
   }
-  virtual int getEndpointType() override
+  virtual int getEndpointType()
   {
     return endpoint_;
   }

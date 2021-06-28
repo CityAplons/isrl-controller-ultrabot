@@ -29,7 +29,7 @@ namespace runbot_stm
     {
     }
 
-    virtual int serialize(unsigned char *outbuffer) const override
+    virtual int serialize(unsigned char *outbuffer) const
     {
       int offset = 0;
       *(outbuffer + offset + 0) = (this->battery_state >> (8 * 0)) & 0xFF;
@@ -65,7 +65,7 @@ namespace runbot_stm
       return offset;
     }
 
-    virtual int deserialize(unsigned char *inbuffer) override
+    virtual int deserialize(unsigned char *inbuffer)
     {
       int offset = 0;
       this->battery_state =  ((uint8_t) (*(inbuffer + offset)));
@@ -104,8 +104,8 @@ namespace runbot_stm
      return offset;
     }
 
-    virtual const char * getType() override { return "runbot_stm/power"; };
-    virtual const char * getMD5() override { return "3e17f18495d90b28ad85608062e408f2"; };
+    const char * getType(){ return "runbot_stm/power"; };
+    const char * getMD5(){ return "3e17f18495d90b28ad85608062e408f2"; };
 
   };
 

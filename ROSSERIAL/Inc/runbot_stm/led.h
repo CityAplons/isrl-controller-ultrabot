@@ -22,22 +22,22 @@ static const char LED[] = "runbot_stm/led";
     {
     }
 
-    virtual int serialize(unsigned char *outbuffer) const override
+    virtual int serialize(unsigned char *outbuffer) const
     {
       int offset = 0;
       offset += this->color.serialize(outbuffer + offset);
       return offset;
     }
 
-    virtual int deserialize(unsigned char *inbuffer) override
+    virtual int deserialize(unsigned char *inbuffer)
     {
       int offset = 0;
       offset += this->color.deserialize(inbuffer + offset);
      return offset;
     }
 
-    virtual const char * getType() override { return LED; };
-    virtual const char * getMD5() override { return "3e04b62b1b39cd97e873789f0bb130e7"; };
+    const char * getType(){ return LED; };
+    const char * getMD5(){ return "3e04b62b1b39cd97e873789f0bb130e7"; };
 
   };
 
@@ -52,7 +52,7 @@ static const char LED[] = "runbot_stm/led";
     {
     }
 
-    virtual int serialize(unsigned char *outbuffer) const override
+    virtual int serialize(unsigned char *outbuffer) const
     {
       int offset = 0;
       union {
@@ -65,7 +65,7 @@ static const char LED[] = "runbot_stm/led";
       return offset;
     }
 
-    virtual int deserialize(unsigned char *inbuffer) override
+    virtual int deserialize(unsigned char *inbuffer)
     {
       int offset = 0;
       union {
@@ -79,8 +79,8 @@ static const char LED[] = "runbot_stm/led";
      return offset;
     }
 
-    virtual const char * getType() override { return LED; };
-    virtual const char * getMD5() override { return "eb13ac1f1354ccecb7941ee8fa2192e8"; };
+    const char * getType(){ return LED; };
+    const char * getMD5(){ return "eb13ac1f1354ccecb7941ee8fa2192e8"; };
 
   };
 
